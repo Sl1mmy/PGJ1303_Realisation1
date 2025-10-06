@@ -34,29 +34,28 @@ layout(std140) uniform Lights
 vec4 computeLighting(int lightIndex, vec3 normal)
 {
     Light light = lights[lightIndex];
- vec3 lightDir = vec3(0, 0, 0);
- float attenuation = 1;
+    vec3 lightDir = vec3(0, 0, 0);
+    float attenuation = 1;
 
- if(light.type == LIGHT_TYPE_DIRECTIONAL)
- {
- lightDir = light.dir;
- }
- else if(light.type == LIGHT_TYPE_POINT)
- {
- vec3 lightVec = light.pos.xyz - v_worldPos;
- lightDir = normalize(lightVec);
- float lightDist = length(lightVec);
- attenuation = 1.0 / (1 + light.linAttenuation * lightDist +
-light.quadAttenuation * (lightDist * lightDist));
- }
+     if(light.type == LIGHT_TYPE_DIRECTIONAL)
+     {
+        lightDir = light.dir;
+     }
+     else if(light.type == LIGHT_TYPE_POINT)
+     {
+     vec3 lightVec = light.pos.xyz - v_worldPos;
+         lightDir = normalize(lightVec);
+         float lightDist = length(lightVec);
+         attenuation = 1.0 / (1 + light.linAttenuation * lightDist +
+         light.quadAttenuation * (lightDist * lightDist));
+     }
   
-  float diffuseComp = clamp(dot(normal, lightDir), 0, 1);
+    float diffuseComp = clamp(dot(normal, lightDir), 0, 1);
 
-  vec3 reflectDir = reflect(-lightDir, normal);
-float specComp = pow(clamp(dot(normalize(viewDir.xyz), reflectDir), 0.0, 1.0), 100.0);
+    vec3 reflectDir = reflect(-lightDir, normal);
+    float specComp = pow(clamp(dot(normalize(viewDir.xyz), reflectDir), 0.0, 1.0), 100.0);
 
- return attenuation * (light.ambientColor + diffuseComp * light.diffuseColor +
-specComp * light.specularColor);
+    return attenuation * (light.ambientColor + diffuseComp * light.diffuseColor + specComp * light.specularColor);
 
 }
 
@@ -67,11 +66,6 @@ void main()
     for(int i = 0; i < MAX_LIGHTS; i++)
     {
         finalColor += computeLighting(i, nNormal);
-    }
-
-    if (viewDir.x == 9999.0) {
-    fragColor = vec4(1.0);
-    return;
     }
 
     fragColor = vec4(finalColor.xyz, 1);

@@ -15,17 +15,12 @@ public:
 	void Draw() override;
 
 private:
-	enum LIGHT_TYPE
+	/* enum LIGHT_TYPE
 	{
 		DIRECTIONAL = 0,
 		POINT = 1,
 		SPOT = 2,
 	}; 
-	
-	struct Matrices
-	{
-		glm::mat4 worldViewProjMatrix;
-	};
 
 	struct Light
 	{
@@ -37,13 +32,18 @@ private:
 		float linAttenuation;
 		float quadAttenuation;
 		int type;
-		int padding;
+		float padding;
 	};
 
 	struct Lights
 	{
 		glm::vec4 viewDir;
 		alignas(16) Light lights[2];
+	};*/
+
+	struct Matrices
+	{
+		glm::mat4 worldViewProjMatrix;
 	};
 
 	OpenGl::CBuffer m_vertexBuffer;
@@ -53,10 +53,9 @@ private:
 	OpenGl::CVertexArray m_vertexArray;
 	OpenGl::CProgram m_program;
 
-	GLuint m_matricesUniformBinding = -1;
+	GLuint m_matricesUniformBinding;
 
 	Matrices m_matrices;
-	Lights m_lights = {};
-	GLuint m_lightsUniformBinding;
+	//Lights m_lights = {};
 	uint32_t m_numIndices = 0;
 };

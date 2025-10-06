@@ -27,6 +27,12 @@ namespace
 		//TANGENT,
 		//BITANGENT,
 	};
+
+	enum UNIFORM_BINDINGS
+	{
+		MATRICES,
+		LIGHTS,
+	};
 }
 
 CMeshScene::CMeshScene()
@@ -94,7 +100,7 @@ CMeshScene::CMeshScene()
 		glBufferData(GL_UNIFORM_BUFFER, sizeof(m_matrices), &m_matrices, GL_DYNAMIC_DRAW);
 	}
 
-	m_lightsUniformBuffer = OpenGl::CBuffer::Create();
+	//m_lightsUniformBuffer = OpenGl::CBuffer::Create();
 
 	{
 		auto vertShader = OpenGl::CShader::CreateFromFile(GL_VERTEX_SHADER, "./shaders/proj_v.glsl");
@@ -106,34 +112,24 @@ CMeshScene::CMeshScene()
 		m_program = OpenGl::CProgram::Create();
 		m_program.AttachShader(vertShader);
 		m_program.AttachShader(fragShader);
-		m_program.Link();
-
-		GLint numBlocks = 0;
-		glGetProgramiv(m_program, GL_ACTIVE_UNIFORM_BLOCKS, &numBlocks);
-		printf("Active uniform blocks: %d\n", numBlocks);
-		for(GLuint i = 0; i < (GLuint)numBlocks; ++i)
-		{
-			char name[256];
-			GLsizei length = 0;
-			glGetActiveUniformBlockName(m_program, i, sizeof(name), &length, name);
-			printf("Uniform block %u : %s\n", i, name);
-		}
-
 
 		glBindAttribLocation(m_program, static_cast<GLuint>(VERTEX_ATTRIBUTES::POSITION), "a_position");
 		glBindAttribLocation(m_program, static_cast<GLuint>(VERTEX_ATTRIBUTES::NORMAL), "a_normal");
-		// BIND TEXCOORD
-		// BIND TANGENT
-		// BIND BITANGENT
+		
+		m_program.Link();
 
-		m_matricesUniformBinding = glGetUniformBlockIndex(m_program, "Matrices");
-		assert(m_matricesUniformBinding != GL_INVALID_INDEX);
-		glUniformBlockBinding(m_program, m_matricesUniformBinding, 0);
+		{
+			GLint uniformBinding = glGetUniformBlockIndex(m_program, "Matrices");
+			assert(uniformBinding != GL_INVALID_INDEX);
+			glUniformBlockBinding(m_program, uniformBinding, UNIFORM_BINDINGS::MATRICES);
+		}
+
+		/*{
+			GLint uniformBinding = glGetUniformBlockIndex(m_program, "Lights");
+			assert(uniformBinding != GL_INVALID_INDEX);
+			glUniformBlockBinding(m_program, uniformBinding, UNIFORM_BINDINGS::LIGHTS);
+		}*/
 	}
-
-	m_lightsUniformBinding = glGetUniformBlockIndex(m_program, "Lights");
-	assert(m_lightsUniformBinding != GL_INVALID_INDEX);
-	glUniformBlockBinding(m_program, m_lightsUniformBinding, 1);
 
 	m_vertexArray = OpenGl::CVertexArray::Create();
 
@@ -178,7 +174,7 @@ void CMeshScene::Update(double dt)
 
 	m_matrices.worldViewProjMatrix = projMat * viewMat * worldMat;
 
-	m_lights.lights[0].ambientColor = glm::vec4(0.1, 0.1, 0.1, 0);
+	/* m_lights.lights[0].ambientColor = glm::vec4(0.1, 0.1, 0.1, 0);
 	m_lights.lights[0].diffuseColor = glm::vec4(1.0, 0.0, 0.0, 0);
 	m_lights.lights[0].specularColor = glm::vec4(1.0f, 1.0f, 1.0f, 0.0f);
 	m_lights.lights[0].dir = glm::vec4(sin(m_currentTime), 0, cos(m_currentTime), 0);
@@ -194,13 +190,13 @@ void CMeshScene::Update(double dt)
 	m_lights.lights[0].type = LIGHT_TYPE::DIRECTIONAL;
 	m_lights.lights[1].type = LIGHT_TYPE::POINT;
 
-	m_lights.viewDir = glm::vec4(glm::normalize(glm::vec3(0.0f, 0.0f, -1.0f)), 0.0f);
+	m_lights.viewDir = glm::vec4(glm::normalize(glm::vec3(0.0f, 0.0f, -1.0f)), 0.0f);*/
 
 	glBindBuffer(GL_UNIFORM_BUFFER, m_uniformBuffer);
 	glBufferData(GL_UNIFORM_BUFFER, sizeof(m_matrices), &m_matrices, GL_DYNAMIC_DRAW);
 
-	glBindBufferBase(GL_UNIFORM_BUFFER, 1, m_lightsUniformBuffer);
-	glBufferData(GL_UNIFORM_BUFFER, sizeof(m_lights), &m_lights, GL_DYNAMIC_DRAW);
+	/* glBindBufferBase(GL_UNIFORM_BUFFER, 1, m_lightsUniformBuffer);
+	glBufferData(GL_UNIFORM_BUFFER, sizeof(m_lights), &m_lights, GL_DYNAMIC_DRAW);*/
 }
 
 void CMeshScene::Draw()

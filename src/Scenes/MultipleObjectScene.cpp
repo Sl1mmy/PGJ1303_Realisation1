@@ -20,6 +20,8 @@ CMultipleObjectScene::CMultipleObjectScene()
 		glBufferData(GL_UNIFORM_BUFFER, sizeof(m_matrices), &m_matrices, GL_DYNAMIC_DRAW);
 	}
 
+	m_lightsUniformBuffer = OpenGl::CBuffer::Create();
+
 	{
 		auto vertShader = OpenGl::CShader::CreateFromFile(GL_VERTEX_SHADER, "./shaders/proj_v.glsl");
 		auto fragShader = OpenGl::CShader::CreateFromFile(GL_FRAGMENT_SHADER, "./shaders/proj_f.glsl");

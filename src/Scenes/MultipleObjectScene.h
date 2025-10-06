@@ -51,12 +51,41 @@ private:
 		glm::mat4 view;
 	};
 
+	enum LIGHT_TYPE
+	{
+		DIRECTIONAL = 0,
+		POINT = 1,
+		SPOT = 2,
+	};
+
+	struct Light
+	{
+		glm::vec4 ambientColor;
+		glm::vec4 diffuseColor;
+		glm::vec4 specularColor;
+		glm::vec4 dir;
+		glm::vec4 pos;
+		float linAttenuation;
+		float quadAttenuation;
+		int type;
+		float padding;
+	};
+
+	struct Lights
+	{
+		glm::vec4 viewDir;
+		alignas(16) Light lights[2];
+	};
+
 	OpenGl::CBuffer m_uniformBuffer;
 	OpenGl::CProgram m_program;
+	OpenGl::CBuffer m_lightsUniformBuffer;
 
 	GLuint m_matricesUniformBinding = -1;
-
+	GLuint m_lightsUniformBinding = -1;
+	
 	Matrices m_matrices;
+	Lights m_lights = {};
 	uint32_t m_numIndices = 0;
 
 	std::vector<MeshData> m_meshes;
