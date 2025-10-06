@@ -6,6 +6,7 @@
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
+#include <iostream>
 
 namespace
 {
@@ -14,8 +15,8 @@ namespace
 		glm::vec3 position;
 		glm::vec3 normal;
 		glm::vec2 texcoord; // UV
-		//glm::vec3 tangent; // for normal map
-		//glm::vec3 bitangent; // for normal map
+		                    //glm::vec3 tangent; // for normal map
+		                    //glm::vec3 bitangent; // for normal map
 	};
 
 	enum VERTEX_ATTRIBUTES
@@ -31,11 +32,11 @@ namespace
 CMeshScene::CMeshScene()
 {
 	Assimp::Importer importer;
-	const aiScene* scene = importer.ReadFile("./resources/models/teapot.dae", 
-		aiProcess_Triangulate | 
-		aiProcess_GenSmoothNormals |
-		aiProcess_FlipUVs |
-		aiProcess_CalcTangentSpace);
+	const aiScene* scene = importer.ReadFile("./resources/models/teapot.dae",
+	                                         aiProcess_Triangulate |
+	                                             aiProcess_GenSmoothNormals |
+	                                             aiProcess_FlipUVs |
+	                                             aiProcess_CalcTangentSpace);
 
 	assert(scene->HasMeshes());
 	auto mesh = scene->mMeshes[0];
@@ -52,13 +53,13 @@ CMeshScene::CMeshScene()
 		auto bitangent = mesh->mBitangents ? mesh->mBitangents[i] : aiVector3D(0, 0, 0);
 
 		vertices.push_back({
-			{position.x, position.y, position.z}, 
-			{normal.x, normal.y, normal.z},
-			//{texcoord.x, texcoord.y},
-			//{tangent.x, tangent.y, tangent.z},
-			//{bitangent.x, bitangent.y, bitangent.z}
-			
-			});
+		    {position.x, position.y, position.z},
+		    {normal.x, normal.y, normal.z},
+		    //{texcoord.x, texcoord.y},
+		    //{tangent.x, tangent.y, tangent.z},
+		    //{bitangent.x, bitangent.y, bitangent.z}
+
+		});
 	}
 
 	std::vector<uint32_t> indices;
@@ -93,6 +94,8 @@ CMeshScene::CMeshScene()
 		glBufferData(GL_UNIFORM_BUFFER, sizeof(m_matrices), &m_matrices, GL_DYNAMIC_DRAW);
 	}
 
+	m_lightsUniformBuffer = OpenGl::CBuffer::Create();
+
 	{
 		auto vertShader = OpenGl::CShader::CreateFromFile(GL_VERTEX_SHADER, "./shaders/proj_v.glsl");
 		auto fragShader = OpenGl::CShader::CreateFromFile(GL_FRAGMENT_SHADER, "./shaders/proj_f.glsl");
@@ -105,6 +108,18 @@ CMeshScene::CMeshScene()
 		m_program.AttachShader(fragShader);
 		m_program.Link();
 
+		GLint numBlocks = 0;
+		glGetProgramiv(m_program, GL_ACTIVE_UNIFORM_BLOCKS, &numBlocks);
+		printf("Active uniform blocks: %d\n", numBlocks);
+		for(GLuint i = 0; i < (GLuint)numBlocks; ++i)
+		{
+			char name[256];
+			GLsizei length = 0;
+			glGetActiveUniformBlockName(m_program, i, sizeof(name), &length, name);
+			printf("Uniform block %u : %s\n", i, name);
+		}
+
+
 		glBindAttribLocation(m_program, static_cast<GLuint>(VERTEX_ATTRIBUTES::POSITION), "a_position");
 		glBindAttribLocation(m_program, static_cast<GLuint>(VERTEX_ATTRIBUTES::NORMAL), "a_normal");
 		// BIND TEXCOORD
@@ -115,6 +130,10 @@ CMeshScene::CMeshScene()
 		assert(m_matricesUniformBinding != GL_INVALID_INDEX);
 		glUniformBlockBinding(m_program, m_matricesUniformBinding, 0);
 	}
+
+	m_lightsUniformBinding = glGetUniformBlockIndex(m_program, "Lights");
+	assert(m_lightsUniformBinding != GL_INVALID_INDEX);
+	glUniformBlockBinding(m_program, m_lightsUniformBinding, 1);
 
 	m_vertexArray = OpenGl::CVertexArray::Create();
 
@@ -159,8 +178,29 @@ void CMeshScene::Update(double dt)
 
 	m_matrices.worldViewProjMatrix = projMat * viewMat * worldMat;
 
+	m_lights.lights[0].ambientColor = glm::vec4(0.1, 0.1, 0.1, 0);
+	m_lights.lights[0].diffuseColor = glm::vec4(1.0, 0.0, 0.0, 0);
+	m_lights.lights[0].specularColor = glm::vec4(1.0f, 1.0f, 1.0f, 0.0f);
+	m_lights.lights[0].dir = glm::vec4(sin(m_currentTime), 0, cos(m_currentTime), 0);
+
+	m_lights.lights[1].diffuseColor = glm::vec4(1, 1, 1, 0);
+	m_lights.lights[1].specularColor = glm::vec4(1, 1, 1, 0);
+	m_lights.lights[1].pos = glm::vec4(0.0f, 0.5 * cos(m_currentTime * 5), 0.75f,
+	                                   0.0f);
+	m_lights.lights[1].type = LIGHT_TYPE::POINT;
+	m_lights.lights[1].linAttenuation = 2;
+	m_lights.lights[1].quadAttenuation = 10;
+
+	m_lights.lights[0].type = LIGHT_TYPE::DIRECTIONAL;
+	m_lights.lights[1].type = LIGHT_TYPE::POINT;
+
+	m_lights.viewDir = glm::vec4(glm::normalize(glm::vec3(0.0f, 0.0f, -1.0f)), 0.0f);
+
 	glBindBuffer(GL_UNIFORM_BUFFER, m_uniformBuffer);
 	glBufferData(GL_UNIFORM_BUFFER, sizeof(m_matrices), &m_matrices, GL_DYNAMIC_DRAW);
+
+	glBindBufferBase(GL_UNIFORM_BUFFER, 1, m_lightsUniformBuffer);
+	glBufferData(GL_UNIFORM_BUFFER, sizeof(m_lights), &m_lights, GL_DYNAMIC_DRAW);
 }
 
 void CMeshScene::Draw()
@@ -178,6 +218,7 @@ void CMeshScene::Draw()
 
 	glUseProgram(m_program);
 	glBindBufferBase(GL_UNIFORM_BUFFER, 0, m_uniformBuffer);
+	glBindBufferBase(GL_UNIFORM_BUFFER, 1, m_lightsUniformBuffer);
 	glBindVertexArray(m_vertexArray);
 	glDrawElements(GL_TRIANGLES, m_numIndices, GL_UNSIGNED_INT, nullptr);
 }
