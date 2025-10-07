@@ -100,8 +100,6 @@ CMeshScene::CMeshScene()
 		glBufferData(GL_UNIFORM_BUFFER, sizeof(m_matrices), &m_matrices, GL_DYNAMIC_DRAW);
 	}
 
-	//m_lightsUniformBuffer = OpenGl::CBuffer::Create();
-
 	{
 		auto vertShader = OpenGl::CShader::CreateFromFile(GL_VERTEX_SHADER, "./shaders/proj_v.glsl");
 		auto fragShader = OpenGl::CShader::CreateFromFile(GL_FRAGMENT_SHADER, "./shaders/proj_f.glsl");
@@ -123,12 +121,6 @@ CMeshScene::CMeshScene()
 			assert(uniformBinding != GL_INVALID_INDEX);
 			glUniformBlockBinding(m_program, uniformBinding, UNIFORM_BINDINGS::MATRICES);
 		}
-
-		/*{
-			GLint uniformBinding = glGetUniformBlockIndex(m_program, "Lights");
-			assert(uniformBinding != GL_INVALID_INDEX);
-			glUniformBlockBinding(m_program, uniformBinding, UNIFORM_BINDINGS::LIGHTS);
-		}*/
 	}
 
 	m_vertexArray = OpenGl::CVertexArray::Create();
@@ -174,29 +166,8 @@ void CMeshScene::Update(double dt)
 
 	m_matrices.worldViewProjMatrix = projMat * viewMat * worldMat;
 
-	/* m_lights.lights[0].ambientColor = glm::vec4(0.1, 0.1, 0.1, 0);
-	m_lights.lights[0].diffuseColor = glm::vec4(1.0, 0.0, 0.0, 0);
-	m_lights.lights[0].specularColor = glm::vec4(1.0f, 1.0f, 1.0f, 0.0f);
-	m_lights.lights[0].dir = glm::vec4(sin(m_currentTime), 0, cos(m_currentTime), 0);
-
-	m_lights.lights[1].diffuseColor = glm::vec4(1, 1, 1, 0);
-	m_lights.lights[1].specularColor = glm::vec4(1, 1, 1, 0);
-	m_lights.lights[1].pos = glm::vec4(0.0f, 0.5 * cos(m_currentTime * 5), 0.75f,
-	                                   0.0f);
-	m_lights.lights[1].type = LIGHT_TYPE::POINT;
-	m_lights.lights[1].linAttenuation = 2;
-	m_lights.lights[1].quadAttenuation = 10;
-
-	m_lights.lights[0].type = LIGHT_TYPE::DIRECTIONAL;
-	m_lights.lights[1].type = LIGHT_TYPE::POINT;
-
-	m_lights.viewDir = glm::vec4(glm::normalize(glm::vec3(0.0f, 0.0f, -1.0f)), 0.0f);*/
-
 	glBindBuffer(GL_UNIFORM_BUFFER, m_uniformBuffer);
 	glBufferData(GL_UNIFORM_BUFFER, sizeof(m_matrices), &m_matrices, GL_DYNAMIC_DRAW);
-
-	/* glBindBufferBase(GL_UNIFORM_BUFFER, 1, m_lightsUniformBuffer);
-	glBufferData(GL_UNIFORM_BUFFER, sizeof(m_lights), &m_lights, GL_DYNAMIC_DRAW);*/
 }
 
 void CMeshScene::Draw()

@@ -6,7 +6,13 @@
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
+#include <iostream>
 
+enum UNIFORM_BINDINGS
+{
+	MATRICES,
+	LIGHTS,
+};
 
 CMultipleObjectScene::CMultipleObjectScene()
 {
@@ -20,7 +26,11 @@ CMultipleObjectScene::CMultipleObjectScene()
 		glBufferData(GL_UNIFORM_BUFFER, sizeof(m_matrices), &m_matrices, GL_DYNAMIC_DRAW);
 	}
 
-	m_lightsUniformBuffer = OpenGl::CBuffer::Create();
+	{
+		m_lightsUniformBuffer = OpenGl::CBuffer::Create();
+		glBindBuffer(GL_UNIFORM_BUFFER, m_lightsUniformBuffer);
+		glBufferData(GL_UNIFORM_BUFFER, sizeof(m_lights), &m_lights, GL_DYNAMIC_DRAW);
+	}
 
 	{
 		auto vertShader = OpenGl::CShader::CreateFromFile(GL_VERTEX_SHADER, "./shaders/proj_v.glsl");
@@ -37,6 +47,28 @@ CMultipleObjectScene::CMultipleObjectScene()
 		m_matricesUniformBinding = glGetUniformBlockIndex(m_program, "Matrices");
 		assert(m_matricesUniformBinding != GL_INVALID_INDEX);
 		glUniformBlockBinding(m_program, m_matricesUniformBinding, 0);
+	}
+
+	{
+		auto vertShader = OpenGl::CShader::CreateFromFile(GL_VERTEX_SHADER, "./shaders/light_v.glsl");
+		auto fragShader = OpenGl::CShader::CreateFromFile(GL_FRAGMENT_SHADER, "./shaders/light_f.glsl");
+
+		vertShader.Compile();
+		fragShader.Compile();
+
+		m_program = OpenGl::CProgram::Create();
+		m_program.AttachShader(vertShader);
+		m_program.AttachShader(fragShader);
+		m_program.Link();
+
+		glBindAttribLocation(m_program, static_cast<GLuint>(VERTEX_ATTRIBUTES::POSITION), "a_position");
+		glBindAttribLocation(m_program, static_cast<GLuint>(VERTEX_ATTRIBUTES::NORMAL), "a_normal");
+
+		{
+			m_lightsUniformBinding = glGetUniformBlockIndex(m_program, "Lights");
+			assert(m_lightsUniformBinding != GL_INVALID_INDEX);
+			glUniformBlockBinding(m_program, m_lightsUniformBinding, 1);
+		}
 	}
 }
 
@@ -62,6 +94,25 @@ void CMultipleObjectScene::Update(double dt)
 
 	glBindBuffer(GL_UNIFORM_BUFFER, m_uniformBuffer);
 	glBufferData(GL_UNIFORM_BUFFER, sizeof(m_matrices), &m_matrices, GL_DYNAMIC_DRAW);
+
+	m_lights.viewDir = m_matrices.view[2];
+
+	m_lights.lights[0].ambientColor = glm::vec4(0.1, 0.1, 0.1, 0);
+	m_lights.lights[0].diffuseColor = glm::vec4(1.0, 0.0, 0.0, 0);
+	m_lights.lights[0].specularColor = glm::vec4(1.0f, 1.0f, 1.0f, 0.0f);
+	m_lights.lights[0].dir = glm::vec4(sin(m_currentTime), 0, cos(m_currentTime), 0);
+
+	m_lights.lights[1].diffuseColor = glm::vec4(1, 1, 1, 0);
+	m_lights.lights[1].specularColor = glm::vec4(1, 1, 1, 0);
+	m_lights.lights[1].pos = glm::vec4(0.0f, 0.5 * cos(m_currentTime * 5), 0.75f,
+	                                   0.0f);
+	m_lights.lights[1].type = LIGHT_TYPE::POINT;
+	m_lights.lights[1].linAttenuation = 2;
+	m_lights.lights[1].quadAttenuation = 10;
+
+
+	glBindBuffer(GL_UNIFORM_BUFFER, m_lightsUniformBuffer);
+	glBufferData(GL_UNIFORM_BUFFER, sizeof(m_lights), &m_lights, GL_DYNAMIC_DRAW);
 }
 
 void CMultipleObjectScene::Draw()
@@ -80,6 +131,7 @@ void CMultipleObjectScene::Draw()
 
 	glUseProgram(m_program);
 	glBindBufferBase(GL_UNIFORM_BUFFER, 0, m_uniformBuffer);
+	glBindBufferBase(GL_UNIFORM_BUFFER, 1, m_lightsUniformBuffer); 
 
 	GLint modelLoc = glGetUniformLocation(m_program, "model");
 
@@ -159,7 +211,7 @@ MeshData CMultipleObjectScene::LoadMeshFromAssimp(const std::string& path)
 	{
 		auto pos = mesh->mVertices[i];
 		auto norm = mesh->mNormals[i];
-		vertices.push_back({{pos.x, pos.y, pos.z}, {norm.x, norm.y, norm.z}, {1.0f, 1.0f, 1.0f, 1.0f}}); // default white color
+		vertices.push_back({{pos.x, pos.y, pos.z}, {norm.x, norm.y, norm.z}, {0.6f, 0.3f, 0.1f, 1.0f}}); // default white color
 	}
 
 	std::vector<uint32_t> indices;

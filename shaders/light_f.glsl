@@ -37,26 +37,24 @@ vec4 computeLighting(int lightIndex, vec3 normal)
     vec3 lightDir = vec3(0, 0, 0);
     float attenuation = 1;
 
-     if(light.type == LIGHT_TYPE_DIRECTIONAL)
-     {
-        lightDir = light.dir;
-     }
-     else if(light.type == LIGHT_TYPE_POINT)
-     {
-     vec3 lightVec = light.pos.xyz - v_worldPos;
-         lightDir = normalize(lightVec);
-         float lightDist = length(lightVec);
-         attenuation = 1.0 / (1 + light.linAttenuation * lightDist +
-         light.quadAttenuation * (lightDist * lightDist));
-     }
-  
-    float diffuseComp = clamp(dot(normal, lightDir), 0, 1);
+    if(light.type == LIGHT_TYPE_DIRECTIONAL)
+    {
+        lightDir = light.dir.xyz; // <<< FIXED HERE
+    }
+    else if(light.type == LIGHT_TYPE_POINT)
+    {
+        vec3 lightVec = light.pos.xyz - v_worldPos;
+        lightDir = normalize(lightVec);
+        float lightDist = length(lightVec);
+        attenuation = 1.0 / (1 + light.linAttenuation * lightDist +
+                             light.quadAttenuation * (lightDist * lightDist));
+    }
 
+    float diffuseComp = clamp(dot(normal, lightDir), 0, 1);
     vec3 reflectDir = reflect(-lightDir, normal);
     float specComp = pow(clamp(dot(normalize(viewDir.xyz), reflectDir), 0.0, 1.0), 100.0);
 
     return attenuation * (light.ambientColor + diffuseComp * light.diffuseColor + specComp * light.specularColor);
-
 }
 
 void main()

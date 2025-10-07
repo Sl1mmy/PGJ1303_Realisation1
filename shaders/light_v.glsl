@@ -14,8 +14,8 @@ layout(std140) uniform Matrices
 void main()
 {
     vec4 worldPos = worldMatrix * vec4(a_position, 1);
-    vec4 worldNrm = worldMatrix * vec4(a_normal, 0);
-    gl_Position = viewProjMatrix * worldPos;
-    v_normal = worldNrm.xyz;
+    mat3 normalMatrix = transpose(inverse(mat3(worldMatrix)));
+    v_normal = normalize(normalMatrix * a_normal);
     v_worldPos = worldPos.xyz;
+    gl_Position = viewProjMatrix * worldPos;
 }
