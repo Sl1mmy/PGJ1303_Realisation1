@@ -32,7 +32,7 @@ CMultipleObjectScene::CMultipleObjectScene()
 		glBufferData(GL_UNIFORM_BUFFER, sizeof(m_lights), &m_lights, GL_DYNAMIC_DRAW);
 	}
 
-	{
+	/* {
 		auto vertShader = OpenGl::CShader::CreateFromFile(GL_VERTEX_SHADER, "./shaders/proj_v.glsl");
 		auto fragShader = OpenGl::CShader::CreateFromFile(GL_FRAGMENT_SHADER, "./shaders/proj_f.glsl");
 
@@ -47,7 +47,7 @@ CMultipleObjectScene::CMultipleObjectScene()
 		m_matricesUniformBinding = glGetUniformBlockIndex(m_program, "Matrices");
 		assert(m_matricesUniformBinding != GL_INVALID_INDEX);
 		glUniformBlockBinding(m_program, m_matricesUniformBinding, 0);
-	}
+	}*/
 
 	{
 		auto vertShader = OpenGl::CShader::CreateFromFile(GL_VERTEX_SHADER, "./shaders/light_v.glsl");
@@ -63,6 +63,12 @@ CMultipleObjectScene::CMultipleObjectScene()
 
 		glBindAttribLocation(m_program, static_cast<GLuint>(VERTEX_ATTRIBUTES::POSITION), "a_position");
 		glBindAttribLocation(m_program, static_cast<GLuint>(VERTEX_ATTRIBUTES::NORMAL), "a_normal");
+
+		{
+			m_matricesUniformBinding = glGetUniformBlockIndex(m_program, "Matrices");
+			assert(m_matricesUniformBinding != GL_INVALID_INDEX);
+			glUniformBlockBinding(m_program, m_matricesUniformBinding, 0);
+		}
 
 		{
 			m_lightsUniformBinding = glGetUniformBlockIndex(m_program, "Lights");
