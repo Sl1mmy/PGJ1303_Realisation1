@@ -110,12 +110,10 @@ void CMultipleObjectScene::Update(double dt)
 
 	m_lights.lights[1].diffuseColor = glm::vec4(1, 1, 1, 0);
 	m_lights.lights[1].specularColor = glm::vec4(1, 1, 1, 0);
-	m_lights.lights[1].pos = glm::vec4(0.0f, 0.5 * cos(m_currentTime * 5), 0.75f,
-	                                   0.0f);
+	m_lights.lights[1].pos = glm::vec4(0.0f, 0.5f * cos(m_currentTime * 5), 0.75f, 1.0f);
 	m_lights.lights[1].type = LIGHT_TYPE::POINT;
-	m_lights.lights[1].linAttenuation = 2;
-	m_lights.lights[1].quadAttenuation = 10;
-
+	m_lights.lights[1].linAttenuation = 0.01f;
+	m_lights.lights[1].quadAttenuation = 0.001f;
 
 	glBindBuffer(GL_UNIFORM_BUFFER, m_lightsUniformBuffer);
 	glBufferData(GL_UNIFORM_BUFFER, sizeof(m_lights), &m_lights, GL_DYNAMIC_DRAW);
