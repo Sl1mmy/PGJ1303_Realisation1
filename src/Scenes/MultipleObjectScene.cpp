@@ -88,24 +88,23 @@ void CMultipleObjectScene::Update(double dt)
 	m_matrices.proj = glm::perspective(glm::pi<float>() * 0.25f, aspectRatio, 0.1f, 1000.f);
 	m_matrices.view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -200.0f));
 
-	// Update Model Matrix Per Object:
-
 	// Teapot
-	m_meshes[0].position = glm::vec3(100.0f, -50.0f, 0.0f);
+	m_meshes[0].position = glm::vec3(40.0f, -45.0f, 0.0f);
+	m_meshes[0].scale = glm::vec3(0.50f);
 
 	// Cube
-	m_meshes[1].position = glm::vec3(-50.0f, -25.0f, 0.0f);
+	m_meshes[1].position = glm::vec3(-40.0f, -25.0f, 0.0f);
 	m_meshes[1].rotation.y = static_cast<float>(m_currentTime) * 2;
-	m_meshes[1].scale = glm::vec3(25.0f);
+	m_meshes[1].scale = glm::vec3(20.0f);
 
 	glBindBuffer(GL_UNIFORM_BUFFER, m_uniformBuffer);
 	glBufferData(GL_UNIFORM_BUFFER, sizeof(m_matrices), &m_matrices, GL_DYNAMIC_DRAW);
 
 	m_lights.viewDir = m_matrices.view[2];
 
-	m_lights.lights[0].ambientColor = glm::vec4(0.1, 0.1, 0.1, 0);
-	m_lights.lights[0].diffuseColor = glm::vec4(1.0, 0.0, 0.0, 0);
-	m_lights.lights[0].specularColor = glm::vec4(1.0f, 1.0f, 1.0f, 0.0f);
+	m_lights.lights[0].ambientColor = glm::vec4(0.2f, 0.2f, 0.1f, 0.0f);  
+	m_lights.lights[0].diffuseColor = glm::vec4(1.0f, 1.0f, 0.6f, 0.0f);  
+	m_lights.lights[0].specularColor = glm::vec4(1.0f, 1.0f, 0.8f, 0.0f); 
 	m_lights.lights[0].dir = glm::vec4(sin(m_currentTime), 0, cos(m_currentTime), 0);
 
 	m_lights.lights[1].diffuseColor = glm::vec4(1, 1, 1, 0);
@@ -215,7 +214,7 @@ MeshData CMultipleObjectScene::LoadMeshFromAssimp(const std::string& path)
 	{
 		auto pos = mesh->mVertices[i];
 		auto norm = mesh->mNormals[i];
-		vertices.push_back({{pos.x, pos.y, pos.z}, {norm.x, norm.y, norm.z}, {0.6f, 0.3f, 0.1f, 1.0f}}); // default white color
+		vertices.push_back({{pos.x, pos.y, pos.z}, {norm.x, norm.y, norm.z}, {0.6f, 0.3f, 0.1f, 1.0f}});
 	}
 
 	std::vector<uint32_t> indices;
